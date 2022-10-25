@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/bug/ent/item"
 	"entgo.io/bug/ent/predicate"
 	"entgo.io/bug/ent/user"
 	"entgo.io/ent/dialect/sql"
@@ -46,9 +47,34 @@ func (uu *UserUpdate) SetName(s string) *UserUpdate {
 	return uu
 }
 
+// SetItemsID sets the "items" edge to the Item entity by ID.
+func (uu *UserUpdate) SetItemsID(id int) *UserUpdate {
+	uu.mutation.SetItemsID(id)
+	return uu
+}
+
+// SetNillableItemsID sets the "items" edge to the Item entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableItemsID(id *int) *UserUpdate {
+	if id != nil {
+		uu = uu.SetItemsID(*id)
+	}
+	return uu
+}
+
+// SetItems sets the "items" edge to the Item entity.
+func (uu *UserUpdate) SetItems(i *Item) *UserUpdate {
+	return uu.SetItemsID(i.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearItems clears the "items" edge to the Item entity.
+func (uu *UserUpdate) ClearItems() *UserUpdate {
+	uu.mutation.ClearItems()
+	return uu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -144,6 +170,41 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldName,
 		})
 	}
+	if uu.mutation.ItemsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   user.ItemsTable,
+			Columns: []string{user.ItemsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: item.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.ItemsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   user.ItemsTable,
+			Columns: []string{user.ItemsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: item.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -182,9 +243,34 @@ func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 	return uuo
 }
 
+// SetItemsID sets the "items" edge to the Item entity by ID.
+func (uuo *UserUpdateOne) SetItemsID(id int) *UserUpdateOne {
+	uuo.mutation.SetItemsID(id)
+	return uuo
+}
+
+// SetNillableItemsID sets the "items" edge to the Item entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableItemsID(id *int) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetItemsID(*id)
+	}
+	return uuo
+}
+
+// SetItems sets the "items" edge to the Item entity.
+func (uuo *UserUpdateOne) SetItems(i *Item) *UserUpdateOne {
+	return uuo.SetItemsID(i.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearItems clears the "items" edge to the Item entity.
+func (uuo *UserUpdateOne) ClearItems() *UserUpdateOne {
+	uuo.mutation.ClearItems()
+	return uuo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -309,6 +395,41 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Value:  value,
 			Column: user.FieldName,
 		})
+	}
+	if uuo.mutation.ItemsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   user.ItemsTable,
+			Columns: []string{user.ItemsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: item.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.ItemsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   user.ItemsTable,
+			Columns: []string{user.ItemsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: item.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

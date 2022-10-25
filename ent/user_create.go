@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/bug/ent/item"
 	"entgo.io/bug/ent/user"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,6 +30,25 @@ func (uc *UserCreate) SetAge(i int) *UserCreate {
 func (uc *UserCreate) SetName(s string) *UserCreate {
 	uc.mutation.SetName(s)
 	return uc
+}
+
+// SetItemsID sets the "items" edge to the Item entity by ID.
+func (uc *UserCreate) SetItemsID(id int) *UserCreate {
+	uc.mutation.SetItemsID(id)
+	return uc
+}
+
+// SetNillableItemsID sets the "items" edge to the Item entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableItemsID(id *int) *UserCreate {
+	if id != nil {
+		uc = uc.SetItemsID(*id)
+	}
+	return uc
+}
+
+// SetItems sets the "items" edge to the Item entity.
+func (uc *UserCreate) SetItems(i *Item) *UserCreate {
+	return uc.SetItemsID(i.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -155,6 +175,26 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldName,
 		})
 		_node.Name = value
+	}
+	if nodes := uc.mutation.ItemsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   user.ItemsTable,
+			Columns: []string{user.ItemsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: item.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.item_owner = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
