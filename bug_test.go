@@ -17,7 +17,11 @@ import (
 )
 
 func TestBugSQLite(t *testing.T) {
-	client := enttest.Open(t, dialect.SQLite, "file:ent?mode=memory&cache=shared&_fk=1")
+	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	if err != nil {
+		t.Fatalf("opening sqlite: %v", err)
+	}
+
 	defer client.Close()
 	test(t, client)
 }
@@ -36,7 +40,10 @@ func TestBugMySQL(t *testing.T) {
 func TestBugPostgres(t *testing.T) {
 	for version, port := range map[string]int{"10": 5430, "11": 5431, "12": 5432, "13": 5433, "14": 5434} {
 		t.Run(version, func(t *testing.T) {
-			client := enttest.Open(t, dialect.Postgres, fmt.Sprintf("host=localhost port=%d user=postgres dbname=test password=pass sslmode=disable", port))
+			client, err := ent.Open(dialect.Postgres, fmt.Sprintf("host=localhost port=%d user=postgres dbname=test password=pass sslmode=disable", port))
+			if err != nil {
+				t.Fatalf("opening mysql: %v", err)
+			}
 			defer client.Close()
 			test(t, client)
 		})
@@ -47,7 +54,10 @@ func TestBugMaria(t *testing.T) {
 	for version, port := range map[string]int{"10.5": 4306, "10.2": 4307, "10.3": 4308} {
 		t.Run(version, func(t *testing.T) {
 			addr := net.JoinHostPort("localhost", strconv.Itoa(port))
-			client := enttest.Open(t, dialect.MySQL, fmt.Sprintf("root:pass@tcp(%s)/test?parseTime=True", addr))
+			client, err := ent.Open(dialect.MySQL, fmt.Sprintf("root:pass@tcp(%s)/test?parseTime=True", addr))
+			if err != nil {
+				t.Fatalf("opening mysql: %v", err)
+			}
 			defer client.Close()
 			test(t, client)
 		})
@@ -56,9 +66,9 @@ func TestBugMaria(t *testing.T) {
 
 func test(t *testing.T, client *ent.Client) {
 	ctx := context.Background()
-	client.User.Delete().ExecX(ctx)
-	client.User.Create().SetName("Ariel").SetAge(30).ExecX(ctx)
-	if n := client.User.Query().CountX(ctx); n != 1 {
-		t.Errorf("unexpected number of users: %d", n)
+	err := client.Debug().Schema.Create(ctx)
+	if err != nil {
+		t.Errorf("migrating: %v", err)
 	}
+	t.FailNow()
 }

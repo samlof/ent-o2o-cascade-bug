@@ -35,7 +35,7 @@ var (
 				Symbol:     "users_items_owner",
 				Columns:    []*schema.Column{UsersColumns[3]},
 				RefColumns: []*schema.Column{ItemsColumns[0]},
-				OnDelete:   schema.Cascade,
+				OnDelete:   schema.SetNull,
 			},
 		},
 	}
